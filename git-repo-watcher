@@ -1,7 +1,8 @@
 #!/bin/bash
-# git config --global credential.helper 'cache --timeout=3600'
 
-clear
+# -------------------------------------------------------------------- #
+
+# git config --global credential.helper 'cache --timeout=3600'
 
 # -------------------------------------------------------------------- #
 
@@ -9,6 +10,7 @@ DIR_TO_SYNC_IN="/home/foo/Git/test"
 LOG_FILE="/home/foo/Git/test.txt"
 BRANCH_TO_SYNC="master"
 UPSTREAM="origin/$BRANCH_TO_SYNC"
+LOOP_INTERVAL_IN_SECONDS=10
 
 # -------------------------------------------------------------------- #
 
@@ -69,9 +71,11 @@ watch-git-repo() {
             exit 1
         fi
 
-        sleep 10
+        sleep $LOOP_INTERVAL_IN_SECONDS
     done
 }
+
+clear
 
 if $STOP ; then
     cl-separator
