@@ -1,2 +1,9 @@
 # git-repo-watcher
-2
+
+```
+./git-repo-watcher start
+```
+
+```
+./git-repo-watcher stop
+```

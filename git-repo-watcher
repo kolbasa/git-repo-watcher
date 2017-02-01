@@ -54,8 +54,7 @@ watch-git-repo() {
         GIT_BASE=$(git merge-base @ "$UPSTREAM")
 
         if [ $GIT_LOCAL = $GIT_REMOTE ]; then
-            # nothing to pull
-            echo -ne "Nothing\n"
+            : # nothing to pull
         elif [ $GIT_LOCAL = $GIT_BASE ]; then
             echo "$(date) - pulling from $UPSTREAM"
             cl-separator
