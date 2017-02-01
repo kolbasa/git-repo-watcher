@@ -1,0 +1,45 @@
+#!/bin/bash
+# git config --global credential.helper 'cache --timeout=3600'
+
+# -------------------------------------------------------------------- #
+
+DIR_TO_SYNC_IN="/home/foo/Git/test"
+BRANCH_TO_SYNC="master"
+
+# -------------------------------------------------------------------- #
+
+SCRIPT_NAME=`basename "$0"`
+
+START=false
+STOP=false
+
+until [ -z "$1" ]; do
+    if   ([ "$1" == "start"   ]); then
+        START=true
+    elif ([ "$1" == "stop"    ]); then
+        STOP=true
+    elif ([ "$1" == "restart" ]); then
+        STOP=true
+        START=true
+    fi
+    shift
+done
+
+echo 'START: '$START
+echo 'STOP:  '$STOP
+
+watch-git-repo() { 
+    while [[ true ]]; do
+        echo "$SCRIPT_NAME" >> '/home/foo/Git/git-repo-watcher/test2.txt'
+        echo 'waiting'
+        sleep 10
+    done
+}
+
+if $START ; then
+    (
+        watch-git-repo
+    ) </dev/null >/dev/null 2>&1 &
+    disown
+    exit 0
+fi
