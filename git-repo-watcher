@@ -1,10 +1,14 @@
 #!/bin/bash
 # git config --global credential.helper 'cache --timeout=3600'
 
+clear
+
 # -------------------------------------------------------------------- #
 
 DIR_TO_SYNC_IN="/home/foo/Git/test"
+LOG_FILE="/home/foo/Git/test.txt"
 BRANCH_TO_SYNC="master"
+UPSTREAM="origin/$BRANCH_TO_SYNC"
 
 # -------------------------------------------------------------------- #
 
@@ -18,28 +22,87 @@ until [ -z "$1" ]; do
         START=true
     elif ([ "$1" == "stop"    ]); then
         STOP=true
-    elif ([ "$1" == "restart" ]); then
-        STOP=true
-        START=true
     fi
     shift
 done
 
-echo 'START: '$START
-echo 'STOP:  '$STOP
+# -------------------------------------------------------------------- #
 
-watch-git-repo() { 
+pull() {
+    git pull
+}
+
+# -------------------------------------------------------------------- #
+
+cl-separator() {
+    for i in {1..70}; do
+        SEP=$SEP"-"
+    done && echo $SEP && SEP=""
+}
+
+watch-git-repo() {
+    cl-separator
+    echo "$(date) - Starting to watch ($UPSTREAM)"
+    cl-separator
+
+    cd "$DIR_TO_SYNC_IN"
     while [[ true ]]; do
-        echo "$SCRIPT_NAME" >> '/home/foo/Git/git-repo-watcher/test2.txt'
-        echo 'waiting'
+        git fetch
+
+        GIT_LOCAL=$(git rev-parse @)
+        GIT_REMOTE=$(git rev-parse "$UPSTREAM")
+        GIT_BASE=$(git merge-base @ "$UPSTREAM")
+
+        if [ $GIT_LOCAL = $GIT_REMOTE ]; then
+            # nothing to pull
+            echo -ne "Nothing\n"
+        elif [ $GIT_LOCAL = $GIT_BASE ]; then
+            echo "$(date) - pulling from $UPSTREAM"
+            cl-separator
+            pull
+        elif [ $GIT_REMOTE = $GIT_BASE ]; then
+            echo "Files changed locally --> Exiting"
+            cl-separator
+            exit 1
+        else
+            echo "Diverged --> Exiting"
+            cl-separator
+            exit 1
+        fi
+
         sleep 10
     done
 }
 
+if $STOP ; then
+    cl-separator
+    ps aux | grep "$SCRIPT_NAME start" | grep -v "grep $SCRIPT_NAME" | \
+        grep -v " $$ "
+    RETURN_CODE=$?
+    if [ $RETURN_CODE -eq 0 ];then
+        echo "$(date) - Killing $SCRIPT_NAME"
+        pkill -f "$SCRIPT_NAME start"
+    else
+        echo -e 'Not running'
+    fi
+    cl-separator
+    exit 1
+fi
+
 if $START ; then
+    cl-separator
+    ps aux | grep "$SCRIPT_NAME start" | grep -v "grep $SCRIPT_NAME" | \
+        grep -v " $$ " && cl-separator && \
+        echo -e '\n↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑\nAlready running!\n' && exit 1
+
+    echo "$(date) - Starting daemon"
+    cl-separator
+    # watch-git-repo
     (
         watch-git-repo
-    ) </dev/null >/dev/null 2>&1 &
+    )  >> "$LOG_FILE" &
     disown
     exit 0
 fi
+
+# -------------------------------------------------------------------- #
