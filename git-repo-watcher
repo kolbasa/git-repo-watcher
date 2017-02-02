@@ -63,14 +63,17 @@ watch-git-repo() {
         if [ $GIT_LOCAL = $GIT_REMOTE ]; then
             : # nothing to pull
         elif [ $GIT_LOCAL = $GIT_BASE ]; then
+            cl-separator
             echo "$(date) - pulling from $UPSTREAM"
             cl-separator
             pull
         elif [ $GIT_REMOTE = $GIT_BASE ]; then
+            cl-separator
             echo "Files changed locally --> Exiting"
             cl-separator
             exit 1
         else
+            cl-separator
             echo "Diverged --> Exiting"
             cl-separator
             exit 1
