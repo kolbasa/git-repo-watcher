@@ -18,6 +18,13 @@ LOG_FILE="../""$SCRIPT_NAME"".log"
 
 # -------------------------------------------------------------------- #
 
+if [ ! -d "$DIR_TO_SYNC_IN" ] || [ ! -x "$DIR_TO_SYNC_IN" ]; then
+    echo "Can not access directory: '$DIR_TO_SYNC_IN'"
+    exit 1
+fi
+
+# -------------------------------------------------------------------- #
+
 START=false
 STOP=false
 STATUS=false
@@ -37,6 +44,11 @@ done
 
 pull() {
     git pull
+    RETURN_CODE=$?
+    if [ $RETURN_CODE -eq 1 ];then
+        echo "Can not pull -> Exiting"
+        exit 1
+    fi
 }
 
 # -------------------------------------------------------------------- #
