@@ -117,6 +117,8 @@ if $START ; then
         grep -v " $$ " && cl-separator && \
         echo -e '\n↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑\nAlready running!\n' && exit 1
 
+    cd "$DIR_TO_SYNC_IN"
+    git fetch
     echo "$(date) - Starting daemon"
     cl-separator
     # watch-git-repo

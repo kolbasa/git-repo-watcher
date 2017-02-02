@@ -11,3 +11,7 @@ chmod u+x git-repo-watcher
 ```
 ./git-repo-watcher stop
 ```
+
+```
+./git-repo-watcher status
+```
