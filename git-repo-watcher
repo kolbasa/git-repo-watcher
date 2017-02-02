@@ -7,7 +7,6 @@
 # -------------------------------------------------------------------- #
 
 DIR_TO_SYNC_IN="/home/foo/Git/test"
-LOG_FILE="/home/foo/Git/test.txt"
 BRANCH_TO_SYNC="master"
 UPSTREAM="origin/$BRANCH_TO_SYNC"
 LOOP_INTERVAL_IN_SECONDS=10
@@ -15,15 +14,21 @@ LOOP_INTERVAL_IN_SECONDS=10
 # -------------------------------------------------------------------- #
 
 SCRIPT_NAME=`basename "$0"`
+LOG_FILE="../""$SCRIPT_NAME"".log"
+
+# -------------------------------------------------------------------- #
 
 START=false
 STOP=false
+STATUS=false
 
 until [ -z "$1" ]; do
-    if   ([ "$1" == "start"   ]); then
+    if   ([ "$1" == "start"  ]); then
         START=true
-    elif ([ "$1" == "stop"    ]); then
+    elif ([ "$1" == "stop"   ]); then
         STOP=true
+    elif ([ "$1" == "status" ]); then
+        STATUS=true
     fi
     shift
 done
@@ -77,19 +82,33 @@ watch-git-repo() {
 
 clear
 
+if [ "$STATUS" = true ] || ([ "$START" = false ] && [ "$STOP" = false ]); then
+    cl-separator
+    ps aux | grep "$SCRIPT_NAME start" | grep -v "grep $SCRIPT_NAME" | \
+        grep -v " $$ "
+    RETURN_CODE=$?
+    if [ $RETURN_CODE -eq 0 ];then
+        echo "--> Already running"
+    else
+        echo "Not running"
+    fi
+    cl-separator
+    exit 0
+fi
+
 if $STOP ; then
     cl-separator
     ps aux | grep "$SCRIPT_NAME start" | grep -v "grep $SCRIPT_NAME" | \
         grep -v " $$ "
     RETURN_CODE=$?
     if [ $RETURN_CODE -eq 0 ];then
-        echo "$(date) - Killing $SCRIPT_NAME"
+        echo "Killing $SCRIPT_NAME"
         pkill -f "$SCRIPT_NAME start"
     else
         echo -e 'Not running'
     fi
     cl-separator
-    exit 1
+    exit 0
 fi
 
 if $START ; then
