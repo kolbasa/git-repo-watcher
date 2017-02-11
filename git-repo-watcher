@@ -2,19 +2,18 @@
 
 # -------------------------------------------------------------------- #
 
-# git config --global credential.helper 'cache --timeout=3600'
-
-# -------------------------------------------------------------------- #
-
-DIR_TO_SYNC_IN="/home/foo/Git/test"
+REPO_NAME="Git Repo Watcher"
+DIR_TO_SYNC_IN="../test"
 BRANCH_TO_SYNC="master"
 UPSTREAM="origin/$BRANCH_TO_SYNC"
 LOOP_INTERVAL_IN_SECONDS=10
 
 # -------------------------------------------------------------------- #
 
+USER_NAME=$(whoami)
 SCRIPT_NAME=`basename "$0"`
-LOG_FILE="../""$SCRIPT_NAME"".log"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+LOG_FILE="$SCRIPT_DIR""/""$SCRIPT_NAME"".log"
 
 # -------------------------------------------------------------------- #
 
@@ -25,17 +24,47 @@ fi
 
 # -------------------------------------------------------------------- #
 
+cl-separator() {
+    for i in {1..75}; do
+        SEP=$SEP"-"
+    done && echo $SEP && SEP=""
+}
+
+# -------------------------------------------------------------------- #
+
+if [ "$#" -eq 0 ]; then
+
+cl-separator
+cat <<EOF
+Usage: $0 [option]
+
+    start    - Start as daemon.
+             - Only one instance is possible.
+    stop     - Stop the daemon.
+    status   - Check if the script is already running.
+    nodaemon - Start without daemonizing.
+EOF
+cl-separator
+
+exit 1
+fi
+
+# -------------------------------------------------------------------- #
+
 START=false
 STOP=false
 STATUS=false
+DAEMON=true
 
 until [ -z "$1" ]; do
-    if   ([ "$1" == "start"  ]); then
+    if   ([ "$1" == "start"    ]); then
         START=true
-    elif ([ "$1" == "stop"   ]); then
+    elif ([ "$1" == "stop"     ]); then
         STOP=true
-    elif ([ "$1" == "status" ]); then
+    elif ([ "$1" == "status"   ]); then
         STATUS=true
+    elif ([ "$1" == "nodaemon" ]); then
+        DAEMON=false
     fi
     shift
 done
@@ -43,21 +72,24 @@ done
 # -------------------------------------------------------------------- #
 
 pull() {
-    git pull
+    cl-separator
+    echo "$(date) - pulling from $UPSTREAM"
+    cl-separator
+
+    git pull origin $BRANCH_TO_SYNC
+
+    COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+    ENVIRONMENT="[$USER_NAME | $REPO_NAME | $BRANCH_TO_SYNC | '$COMMIT_MESSAGE']"
+
     RETURN_CODE=$?
-    if [ $RETURN_CODE -eq 1 ];then
-        echo "Can not pull -> Exiting"
+    if [ $RETURN_CODE -eq 1 ]; then
+        echo "$ENVIRONMENT Can not pull -> Exiting"
         exit 1
     fi
+    echo "$ENVIRONMENT Successfully pulled!"
 }
 
 # -------------------------------------------------------------------- #
-
-cl-separator() {
-    for i in {1..70}; do
-        SEP=$SEP"-"
-    done && echo $SEP && SEP=""
-}
 
 watch-git-repo() {
     cl-separator
@@ -68,25 +100,26 @@ watch-git-repo() {
     while [[ true ]]; do
         git fetch
 
-        GIT_LOCAL=$(git rev-parse @)
+        GIT_LOCAL=$(git rev-parse HEAD)
         GIT_REMOTE=$(git rev-parse "$UPSTREAM")
-        GIT_BASE=$(git merge-base @ "$UPSTREAM")
+        GIT_BASE=$(git merge-base HEAD "$UPSTREAM")
+
+        ENVIRONMENT="[$USER_NAME | $REPO_NAME | $BRANCH_TO_SYNC]"
 
         if [ $GIT_LOCAL = $GIT_REMOTE ]; then
             : # nothing to pull
         elif [ $GIT_LOCAL = $GIT_BASE ]; then
-            cl-separator
-            echo "$(date) - pulling from $UPSTREAM"
-            cl-separator
             pull
         elif [ $GIT_REMOTE = $GIT_BASE ]; then
             cl-separator
-            echo "Files changed locally --> Exiting"
+            ERROR_MSG="Files changed locally --> Exiting"
+            echo "$ENVIRONMENT $ERROR_MSG"
             cl-separator
             exit 1
         else
             cl-separator
-            echo "Diverged --> Exiting"
+            ERROR_MSG="Diverged --> Exiting"
+            echo "$ENVIRONMENT $ERROR_MSG"
             cl-separator
             exit 1
         fi
@@ -94,8 +127,6 @@ watch-git-repo() {
         sleep $LOOP_INTERVAL_IN_SECONDS
     done
 }
-
-clear
 
 if [ "$STATUS" = true ] || ([ "$START" = false ] && [ "$STOP" = false ]); then
     cl-separator
@@ -133,14 +164,25 @@ if $START ; then
         echo -e '\n↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑\nAlready running!\n' && exit 1
 
     cd "$DIR_TO_SYNC_IN"
+    git config --global credential.helper 'cache --timeout=3600' # 60min
     git fetch
+
+    RETURN_CODE=$?
+    if [ $RETURN_CODE -eq 1 ];then
+        echo "Wrong password -> Exiting"
+        exit 1
+    fi
+
     echo "$(date) - Starting daemon"
     cl-separator
-    # watch-git-repo
-    (
+
+    if $DAEMON ; then
+        ( watch-git-repo )  >> "$LOG_FILE" &
+        disown
+    else
         watch-git-repo
-    )  >> "$LOG_FILE" &
-    disown
+    fi
+
     exit 0
 fi
 
