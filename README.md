@@ -2,6 +2,8 @@
 
 A simple bash script to watch a git repository and pull upstream changes if needed. 
 
+![](https://github.com/kolbasa/git-repo-watcher/blob/images/Git-Repo-Watcher.gif)
+
 ### Configuration
 
 There are three properties that must be set:
