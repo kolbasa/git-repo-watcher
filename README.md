@@ -6,12 +6,14 @@ A simple bash script to watch a git repository and pull upstream changes if need
 
 There are three properties that must be set:
 ```
-REPO_NAME="Git Repo Watcher" # For logging purposes
-DIR_TO_SYNC_IN="../test-dir" # The directory path of your git repository
+REPO_NAME="Repo Watcher"     # For logging purposes
+DIR_TO_SYNC_IN="repo-dir"    # The directory path of your git repository
 BRANCH_TO_SYNC="master"      # The git branch you want to keep in sync
 ```
 
-If you want to watch multiple repositories, just copy the script file, rename it accordingly and adjust your configuration.
+If you want to watch multiple repositories, just copy the script file, rename it accordingly and adjust your configuration. Do not use the same name on multiple copies.
+
+It also works with private repositories. At startup, the program will execute the command `git fetch` to cache you credentials with `git config --global credential.helper`.
 
 ### Usage
 
