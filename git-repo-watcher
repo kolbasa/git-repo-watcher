@@ -3,10 +3,10 @@
 # -------------------------------------------------------------------- #
 
 REPO_NAME="Git Repo Watcher"
-DIR_TO_SYNC_IN="../test"
+DIR_TO_SYNC_IN="../keep-it-synced"
 BRANCH_TO_SYNC="master"
 UPSTREAM="origin/$BRANCH_TO_SYNC"
-LOOP_INTERVAL_IN_SECONDS=10
+LOOP_INTERVAL_IN_SECONDS=3
 
 # -------------------------------------------------------------------- #
 
@@ -95,7 +95,6 @@ pull() {
 # -------------------------------------------------------------------- #
 
 watch-git-repo() {
-    cl-separator
     echo "$(date) - Starting to watch ($UPSTREAM)"
     cl-separator
 
@@ -176,10 +175,9 @@ if $START ; then
         exit 1
     fi
 
-    echo "$(date) - Starting daemon"
-    cl-separator
-
     if $DAEMON ; then
+        cl-separator
+        echo "$(date) - Starting daemon"
         ( watch-git-repo )  >> "$LOG_FILE" &
         disown
     else
