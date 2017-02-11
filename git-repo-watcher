@@ -83,10 +83,13 @@ pull() {
 
     RETURN_CODE=$?
     if [ $RETURN_CODE -eq 1 ]; then
-        echo "$ENVIRONMENT Can not pull -> Exiting"
+        ERROR_MSG="$ENVIRONMENT Can not pull -> Exiting"
+        echo "$ERROR_MSG"
         exit 1
     fi
-    echo "$ENVIRONMENT Successfully pulled!"
+
+    MSG="$ENVIRONMENT Successfully pulled!"
+    echo "$MSG"
 }
 
 # -------------------------------------------------------------------- #
@@ -112,14 +115,14 @@ watch-git-repo() {
             pull
         elif [ $GIT_REMOTE = $GIT_BASE ]; then
             cl-separator
-            ERROR_MSG="Files changed locally --> Exiting"
-            echo "$ENVIRONMENT $ERROR_MSG"
+            ERROR_MSG="$ENVIRONMENT Files changed locally --> Exiting"
+            echo "$ERROR_MSG"
             cl-separator
             exit 1
         else
             cl-separator
-            ERROR_MSG="Diverged --> Exiting"
-            echo "$ENVIRONMENT $ERROR_MSG"
+            ERROR_MSG="$ENVIRONMENT Diverged --> Exiting"
+            echo "$ERROR_MSG"
             cl-separator
             exit 1
         fi
