@@ -176,8 +176,8 @@ if $START ; then
     fi
 
     if $DAEMON ; then
-        cl-separator
         echo "$(date) - Starting daemon"
+        cl-separator
         ( watch-git-repo )  >> "$LOG_FILE" &
         disown
     else
