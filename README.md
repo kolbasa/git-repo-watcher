@@ -8,29 +8,29 @@ A simple bash script to watch a git repository and pull upstream changes if need
 
 There are three properties that must be set:
 ```Shell
-REPO_NAME="Repo Watcher"     # For logging purposes
-DIR_TO_SYNC_IN="repo-dir"    # The directory path of your git repository
-BRANCH_TO_SYNC="master"      # The git branch you want to keep in sync
+REPO_NAME       # For logging purposes
+DIR_TO_SYNC_IN  # The directory path of your git repository
+BRANCH_TO_SYNC  # The git branch you want to keep in sync
 ```
 
 ### Usage
 
-```
+```Shell
 ./git-repo-watcher start
 ```
 * Will start the script as a daemon program. All stdout und stderr will be written to a log file in the same directory as the script. The script will fail if there is already a process running.
 
-```
+```Shell
 ./git-repo-watcher stop
 ```
 * Will stop the daemon.
 
-```
+```Shell
 ./git-repo-watcher status
 ```
 * Tells you if the script is already running.
 
-```
+```Shell
 ./git-repo-watcher nodaemon
 ```
 * Runs the process within the terminal's current bash instance. No logfile will be created. 
