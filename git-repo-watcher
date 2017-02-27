@@ -103,8 +103,8 @@ watch-git-repo() {
         git fetch
 
         GIT_LOCAL=$(git rev-parse HEAD)
-        GIT_REMOTE=$(git rev-parse "refs/remotes/$UPSTREAM")
-        GIT_BASE=$(git merge-base HEAD "refs/remotes/$UPSTREAM")
+        GIT_REMOTE=$(git rev-parse "refs/heads/$UPSTREAM")
+        GIT_BASE=$(git merge-base HEAD "refs/heads/$UPSTREAM")
 
         ENVIRONMENT="[$USER_NAME | $REPO_NAME | $BRANCH_TO_SYNC]"
 
