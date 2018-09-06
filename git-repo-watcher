@@ -135,6 +135,8 @@ pull() {
 watch-git-repo() {
     while [[ true ]]; do
 
+        cd "$DIR_TO_SYNC_IN"
+
         if [ -f ".git/index.lock" ]; then
             echo '[ERROR] Git Repository is locked, waiting to unlock';
             sleep 2
