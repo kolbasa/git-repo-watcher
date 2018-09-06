@@ -37,4 +37,4 @@ DIR_TO_SYNC_IN  # The directory path of your git repository, relative or absolut
 
 * If you want to watch multiple repositories, just copy the script file, rename it accordingly and adjust your configuration. Do not use the same name on multiple copies.
 
-* It also works for private repositories. At startup, the program will execute the command `git fetch` to cache your credentials with `git config --global credential.helper`.
+* It also works for private repositories. At startup, the program will execute `git fetch` to cache your credentials with `git config --global credential.helper`.
