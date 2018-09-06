@@ -16,21 +16,21 @@ nothing_to_pull_handler() {
     : # Do nothing
 }
 
-repo_pulled_handler() {
-    : # Do nothing
-}
-
 local_file_change_handler() {
     : # Do nothing
 }
 
+repo_pulled_handler() {
+    echo "[INFO] Pulled: $1"
+}
+
 repo_pull_failed_handler() {
-    echo "$1 Can not pull --> Exiting"
+    echo "[ERROR] Can not pull --> Exiting: $1"
     exit 1
 }
 
 repo_diverged_handler() {
-    echo "$1 Diverged --> Exiting"
+    echo "[ERROR] Repo diverged --> Exiting: $1"
     exit 1
 }
 
@@ -49,7 +49,7 @@ if [ -d "$ABS_DIR_TO_SYNC_IN" ] && [ -x "$ABS_DIR_TO_SYNC_IN" ]; then
 fi
 
 if [ ! -d "$DIR_TO_SYNC_IN" ] || [ ! -x "$DIR_TO_SYNC_IN" ]; then
-    echo "Can not access directory: '$DIR_TO_SYNC_IN'"
+    echo "[ERROR] Can not access directory: '$DIR_TO_SYNC_IN'"
     exit 1
 fi
 
@@ -57,7 +57,7 @@ fi
 
 cd "$DIR_TO_SYNC_IN"
 if [ ! -d ".git" ]; then
-    echo "Not a git repository: '$DIR_TO_SYNC_IN'"
+    echo "[ERROR] Not a git repository: '$DIR_TO_SYNC_IN'"
     exit 1
 fi
 
@@ -112,21 +112,22 @@ done
 
 pull() {
     cl-separator
-    echo "$(date) - pulling from $UPSTREAM"
+    echo "[INFO] $(date) - pulling from $UPSTREAM"
     cl-separator
     git pull origin $BRANCH_TO_SYNC
     RETURN_CODE=$?
     cl-separator
 
-    ENVIRONMENT="[$USER_NAME | $REPO_NAME | $BRANCH_TO_SYNC | '$COMMIT_MESSAGE']"
     COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+    ENVIRONMENT="[$REPO_NAME | $BRANCH_TO_SYNC | '$COMMIT_MESSAGE']"
 
     if [ $RETURN_CODE -eq 1 ]; then
         repo_pull_failed_handler "$ENVIRONMENT"
+    else
+        repo_pulled_handler "$ENVIRONMENT"
     fi
 
-    MSG="$ENVIRONMENT Successfully pulled!"
-    echo "$MSG"
+    cl-separator
 }
 
 # -------------------------------------------------------------------- #
@@ -135,7 +136,7 @@ watch-git-repo() {
     while [[ true ]]; do
 
         if [ -f ".git/index.lock" ]; then
-            echo 'Git Repository is locked, waiting to unlock';
+            echo '[ERROR] Git Repository is locked, waiting to unlock';
             sleep 2
             continue
         fi
@@ -148,7 +149,7 @@ watch-git-repo() {
                 | sed -n -e 's/^\* \(.*\)/\1/p' \
                 | sed -e "s/^origin\///"\
             )
-            echo "$(date) - Starting to watch ($BRANCH_TO_SYNC)"
+            echo "[INFO] $(date) - Starting to watch ($BRANCH_TO_SYNC)"
         fi
 
         REFS=""
@@ -167,13 +168,12 @@ watch-git-repo() {
         GIT_REMOTE=$(git rev-parse "$REFS""$UPSTREAM")
         GIT_BASE=$(git merge-base HEAD "$REFS""$UPSTREAM")
         REPO_NAME=$(basename `git rev-parse --show-toplevel`)
-        ENVIRONMENT="[$USER_NAME | $REPO_NAME | $BRANCH_TO_SYNC]"
+        ENVIRONMENT="[$REPO_NAME | $BRANCH_TO_SYNC]"
 
         if [ $GIT_LOCAL = $GIT_REMOTE ]; then
             nothing_to_pull_handler "$ENVIRONMENT"
         elif [ $GIT_LOCAL = $GIT_BASE ]; then
             pull
-            repo_pulled_handler "$ENVIRONMENT"
         elif [ $GIT_REMOTE = $GIT_BASE ]; then
             local_file_change_handler "$ENVIRONMENT"
         else
