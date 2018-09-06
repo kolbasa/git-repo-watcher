@@ -1,12 +1,38 @@
 #!/bin/bash
 
 # -------------------------------------------------------------------- #
+# CONFIGURATION
+# -------------------------------------------------------------------- #
 
-REPO_NAME="Git Repo Watcher"
-DIR_TO_SYNC_IN="../keep-it-synced"
-BRANCH_TO_SYNC="master"
-UPSTREAM="origin/$BRANCH_TO_SYNC"
+DIR_TO_SYNC_IN="test/example-repository"
 LOOP_INTERVAL_IN_SECONDS=10
+CREDENTIAL_HELPER_CACHE_IN_SECONDS=$(($LOOP_INTERVAL_IN_SECONDS+600))
+
+# -------------------------------------------------------------------- #
+# CUSTOM HANDLER
+# -------------------------------------------------------------------- #
+
+nothing_to_pull_handler() {
+    : # Do nothing
+}
+
+repo_pulled_handler() {
+    : # Do nothing
+}
+
+local_file_change_handler() {
+    : # Do nothing
+}
+
+repo_pull_failed_handler() {
+    echo "$1 Can not pull --> Exiting"
+    exit 1
+}
+
+repo_diverged_handler() {
+    echo "$1 Diverged --> Exiting"
+    exit 1
+}
 
 # -------------------------------------------------------------------- #
 
@@ -17,8 +43,21 @@ LOG_FILE="$SCRIPT_DIR""/""$SCRIPT_NAME"".log"
 
 # -------------------------------------------------------------------- #
 
+ABS_DIR_TO_SYNC_IN="$SCRIPT_DIR""/""$DIR_TO_SYNC_IN"
+if [ -d "$ABS_DIR_TO_SYNC_IN" ] && [ -x "$ABS_DIR_TO_SYNC_IN" ]; then
+    DIR_TO_SYNC_IN="$ABS_DIR_TO_SYNC_IN"
+fi
+
 if [ ! -d "$DIR_TO_SYNC_IN" ] || [ ! -x "$DIR_TO_SYNC_IN" ]; then
     echo "Can not access directory: '$DIR_TO_SYNC_IN'"
+    exit 1
+fi
+
+# -------------------------------------------------------------------- #
+
+cd "$DIR_TO_SYNC_IN"
+if [ ! -d ".git" ]; then
+    echo "Not a git repository: '$DIR_TO_SYNC_IN'"
     exit 1
 fi
 
@@ -36,13 +75,13 @@ if [ "$#" -eq 0 ]; then
 
 cl-separator
 cat <<EOF
-Usage: $0 [option]
+USAGE: $0 [COMMAND]
 
-    start    - Start as daemon.
-             - Only one instance is possible.
-    stop     - Stop the daemon.
-    status   - Check if the script is already running.
-    nodaemon - Start without daemonizing.
+POSSIBLE COMMANDS:
+    start          - Start as daemon (only one instance is possible).
+    stop           - Stop the daemon.
+    status         - Check if the script is already running.
+    start nodaemon - Start without daemonizing.
 EOF
 cl-separator
 
@@ -75,17 +114,15 @@ pull() {
     cl-separator
     echo "$(date) - pulling from $UPSTREAM"
     cl-separator
-
     git pull origin $BRANCH_TO_SYNC
-
-    COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-    ENVIRONMENT="[$USER_NAME | $REPO_NAME | $BRANCH_TO_SYNC | '$COMMIT_MESSAGE']"
-
     RETURN_CODE=$?
+    cl-separator
+
+    ENVIRONMENT="[$USER_NAME | $REPO_NAME | $BRANCH_TO_SYNC | '$COMMIT_MESSAGE']"
+    COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+
     if [ $RETURN_CODE -eq 1 ]; then
-        ERROR_MSG="$ENVIRONMENT Can not pull -> Exiting"
-        echo "$ERROR_MSG"
-        exit 1
+        repo_pull_failed_handler "$ENVIRONMENT"
     fi
 
     MSG="$ENVIRONMENT Successfully pulled!"
@@ -95,35 +132,52 @@ pull() {
 # -------------------------------------------------------------------- #
 
 watch-git-repo() {
-    echo "$(date) - Starting to watch ($UPSTREAM)"
-    cl-separator
-
-    cd "$DIR_TO_SYNC_IN"
     while [[ true ]]; do
+
+        if [ -f ".git/index.lock" ]; then
+            echo 'Git Repository is locked, waiting to unlock';
+            sleep 2
+            continue
+        fi
+
         git fetch
 
-        GIT_LOCAL=$(git rev-parse HEAD)
-        GIT_REMOTE=$(git rev-parse "refs/heads/$UPSTREAM")
-        GIT_BASE=$(git merge-base HEAD "refs/heads/$UPSTREAM")
+        if [ -z "$BRANCH_TO_SYNC" ]; then
+            BRANCH_TO_SYNC=$(\
+                git branch \
+                | sed -n -e 's/^\* \(.*\)/\1/p' \
+                | sed -e "s/^origin\///"\
+            )
+            echo "$(date) - Starting to watch ($BRANCH_TO_SYNC)"
+        fi
 
+        REFS=""
+        UPSTREAM="$(\
+            git rev-parse --abbrev-ref \
+            --symbolic-full-name @{u} 2>/dev/null\
+        )"
+
+        # upstream was not configured
+        if [ -z "$UPSTREAM" ]; then
+            UPSTREAM="origin/$BRANCH_TO_SYNC"
+            REFS="refs/heads/"
+        fi
+
+        GIT_LOCAL=$(git rev-parse HEAD)
+        GIT_REMOTE=$(git rev-parse "$REFS""$UPSTREAM")
+        GIT_BASE=$(git merge-base HEAD "$REFS""$UPSTREAM")
+        REPO_NAME=$(basename `git rev-parse --show-toplevel`)
         ENVIRONMENT="[$USER_NAME | $REPO_NAME | $BRANCH_TO_SYNC]"
 
         if [ $GIT_LOCAL = $GIT_REMOTE ]; then
-            : # nothing to pull
+            nothing_to_pull_handler "$ENVIRONMENT"
         elif [ $GIT_LOCAL = $GIT_BASE ]; then
             pull
+            repo_pulled_handler "$ENVIRONMENT"
         elif [ $GIT_REMOTE = $GIT_BASE ]; then
-            cl-separator
-            ERROR_MSG="$ENVIRONMENT Files changed locally --> Exiting"
-            echo "$ERROR_MSG"
-            cl-separator
-            exit 1
+            local_file_change_handler "$ENVIRONMENT"
         else
-            cl-separator
-            ERROR_MSG="$ENVIRONMENT Diverged --> Exiting"
-            echo "$ERROR_MSG"
-            cl-separator
-            exit 1
+            repo_diverged_handler "$ENVIRONMENT"
         fi
 
         sleep $LOOP_INTERVAL_IN_SECONDS
@@ -166,7 +220,8 @@ if $START ; then
         echo -e '\n↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑\nAlready running!\n' && exit 1
 
     cd "$DIR_TO_SYNC_IN"
-    git config --global credential.helper 'cache --timeout=3600' # 60min
+    git config --global credential.helper \
+        "cache --timeout=$CREDENTIAL_HELPER_CACHE_IN_SECONDS"
     git fetch
 
     RETURN_CODE=$?
