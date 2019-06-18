@@ -36,7 +36,7 @@ if [[ ! -d "$shunit2_dir" ]]; then
     git clone --depth 1 "$shunit_git" "$shunit2_dir"
 fi
 
-print_seperator() {
+print_separator() {
     for i in {1..75}; do local s=$s"-"; done && echo $s;
 }
 
@@ -67,7 +67,7 @@ setUp() {
     git clone "$remote_git" "$git_that_changes" 1>&3 2>&4
     push_one_file 'README.md'
     git clone "$remote_git" "$watched_git" 1>&3 2>&4
-    print_seperator
+    print_separator
     return 0;
 }
 

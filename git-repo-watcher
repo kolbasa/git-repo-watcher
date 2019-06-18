@@ -2,12 +2,12 @@
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-print_seperator() {
+print_separator() {
     for i in {1..75}; do local s=$s"-"; done && echo $s
 }
 
 print_usage() {
-    print_seperator;
+    print_separator;
     echo "NAME";
     echo "    git-repo-watcher -- keeps a git repository in sync with its origin";
     echo "SYNOPSIS";
@@ -15,12 +15,12 @@ print_usage() {
     echo "DESCRIPTION";
     echo "    The following options are available:";
     echo "    -i    Interval";
-    echo "    -c    Hooks-File";
-    print_seperator;
+    echo "    -h    Hooks-File";
+    print_separator;
     exit 1;
 }
 
-while getopts ":d:i:c:" opt; do
+while getopts ":d:i:h:" opt; do
     case "${opt}" in
         d)
             git_repository_dir=${OPTARG};
@@ -63,7 +63,7 @@ if [[ -z "$interval_in_seconds" ]]; then
 fi
 
 pull() {
-    print_seperator
+    print_separator
     echo "[INFO] $(date) - pulling from $upstream"
     git pull
     exit_code=$?
@@ -74,7 +74,7 @@ pull() {
         commit_message=$(git log -1 --pretty=oneline)
         change_pulled "$1" "$2" "$commit_message"
     fi
-    print_seperator
+    print_separator
 }
 
 while [[ true ]]; do
