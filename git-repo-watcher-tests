@@ -1,0 +1,212 @@
+#!/usr/bin/env bash
+
+script_name="git-repo-watcher"
+shunit_git="https://github.com/kward/shunit2"
+tmp_dir="/tmp/git-repo-watcher"
+shunit2_dir="$tmp_dir/shunit2/"
+remote_git="$tmp_dir/remote-git"
+watched_git="$tmp_dir/watched-git"
+git_that_changes="$tmp_dir/changed-git"
+stdout="$tmp_dir/stdout.txt"
+
+verbose=false
+case "$1" in
+-v|--verbose)
+    verbose=true
+    shift ;;
+esac
+
+if [[ "$verbose" = true ]] ; then
+    exec 3>&1
+    exec 4>&2
+else
+    exec 3>/dev/null
+    exec 4>/dev/null
+fi
+
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" \
+    >/dev/null 2>&1 && pwd )"
+repo_watcher="$script_dir/$script_name"
+
+# Create temp directory
+[[ ! -d "$tmp_dir" ]] && mkdir "$tmp_dir"
+
+# Checkout shunit2 unit test framework
+if [[ ! -d "$shunit2_dir" ]]; then
+    git clone --depth 1 "$shunit_git" "$shunit2_dir"
+fi
+
+print_seperator() {
+    for i in {1..75}; do local s=$s"-"; done && echo $s;
+}
+
+push_one_file() {
+    local file=$1;
+    if [[ -z $file ]]; then
+        local file='test-file'
+    fi
+
+    cd "$git_that_changes"
+    touch "$file"
+    git add . 1>&3 2>&4
+    git commit -m "Message for File $file" 1>&3 2>&4
+    git push 1>&3 2>&4
+}
+
+# Will be executed before each test
+setUp() {
+    [[ -d "$remote_git" ]] && rm -rf "$remote_git"
+    [[ -d "$watched_git" ]] && rm -rf "$watched_git"
+    [[ -d "$git_that_changes" ]] && rm -rf "$git_that_changes"
+    [[ -f "$stdout" ]] && rm "$stdout"
+
+    # Create a fresh 'remote' git repository
+    git init --bare "$remote_git" 1>&3 2>&4
+    git clone "$remote_git" "$git_that_changes" 1>&3 2>&4
+    push_one_file 'README.md'
+    git clone "$remote_git" "$watched_git" 1>&3 2>&4
+    print_seperator
+    return 0;
+}
+
+cleanup() {
+    [[ -z "$1" ]] && return
+    kill $1 2>/dev/null
+}
+
+set_timeout() {
+    [[ -z "$1" ]] && return
+    local timeout_in_sec=1
+    if [[ ! -z "$2" ]]; then
+        timeout_in_sec=$2
+    fi
+    sleep $timeout_in_sec
+    cleanup $1
+}
+
+function start_watcher() {
+    $repo_watcher -d "$watched_git" -i 0.1 &> "$stdout" &
+}
+
+function await() {
+    [[ -z "$1" ]] && return
+    wait $1
+    cleanup $2
+    result=$(cat "$stdout")
+}
+
+function create_new_branch() {
+    [[ -z "$1" ]] && return
+    cd "$git_that_changes"
+    git checkout -b "$1" 1>&3 2>&4;
+    git push --set-upstream origin $1 1>&3 2>&4
+}
+
+# -------------------------------------------------------------------- #
+
+testHelpScreen() {
+    $repo_watcher &> "$stdout" & local watcher_pid=$!
+    set_timeout $watcher_pid & local timeout_pid=$!
+    await $watcher_pid $timeout_pid
+
+    assertContains "$result" "SYNOPSIS"
+}
+
+# -------------------------------------------------------------------- #
+
+testNewCommitBeforeStart() {
+    push_one_file
+
+    start_watcher && local watcher_pid=$!
+    set_timeout $watcher_pid & local timeout_pid=$!
+    await $watcher_pid $timeout_pid
+
+    assertContains "$result" "1 file changed"
+    assertContains "$result" "Fast-forward"
+}
+
+# -------------------------------------------------------------------- #
+
+testNewCommitAfterStart() {
+    start_watcher && local watcher_pid=$!
+    push_one_file
+
+    set_timeout $watcher_pid & local timeout_pid=$!
+    await $watcher_pid $timeout_pid
+
+    assertContains "$result" "1 file changed"
+    assertContains "$result" "Fast-forward"
+}
+
+# -------------------------------------------------------------------- #
+
+testNothingChangedHook() {
+    start_watcher && local watcher_pid=$!
+
+    set_timeout $watcher_pid & local timeout_pid=$!
+    await $watcher_pid $timeout_pid
+
+    assertContains "$result" "Nothing changed"
+    assertNotContains "$result" "Fast-forward"
+}
+
+# -------------------------------------------------------------------- #
+
+testStartupHook() {
+    start_watcher && local watcher_pid=$!
+    set_timeout $watcher_pid & local timeout_pid=$!
+    await $watcher_pid $timeout_pid
+
+    assertContains "$result" "Watch started"
+}
+
+# -------------------------------------------------------------------- #
+
+testBranchChangedHook() {
+    local branch="new_branch";
+    create_new_branch "$branch"
+
+    start_watcher && local watcher_pid=$!
+
+    sleep 0.5
+    cd "$watched_git"
+    git checkout -t "origin/$branch" 1>&3 2>&4
+
+    set_timeout $watcher_pid & local timeout_pid=$!
+    await $watcher_pid $timeout_pid
+
+    assertContains "$result" "Branch changed"
+    assertContains "$result" "$branch"
+}
+
+# -------------------------------------------------------------------- #
+
+testNoUpstreamHook() {
+    start_watcher && local watcher_pid=$!
+
+    sleep 0.5
+    cd "$watched_git"
+    git checkout -b "new_branch" 1>&3 2>&4
+
+    set_timeout $watcher_pid & local timeout_pid=$!
+    await $watcher_pid $timeout_pid
+
+    assertContains "$result" "Upstream not set"
+}
+
+# -------------------------------------------------------------------- #
+
+testPulledHook() {
+    push_one_file
+    start_watcher && local watcher_pid=$!
+    set_timeout $watcher_pid & local timeout_pid=$!
+    await $watcher_pid $timeout_pid
+
+    assertContains "$result" "Changes pulled"
+}
+
+# -------------------------------------------------------------------- #
+
+. $shunit2_dir/shunit2
+
+# -------------------------------------------------------------------- #

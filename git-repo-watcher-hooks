@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+startup() {
+    echo "Watch started: $@"
+}
+
+no_changes() {
+    echo "Nothing changed: $@"
+}
+
+change_pulled() {
+    echo "Changes pulled: $@"
+}
+
+branch_changed() {
+    echo "Branch changed: $@"
+}
+
+upstream_not_set() {
+    echo "Upstream not set: $@"
+}
+
+local_change() {
+    echo "local file changed: $@"
+}
+
+diverged() {
+    echo "Diverged --> Exiting: $@"
+    exit 1
+}
+
+pull_failed() {
+    echo "Pull failed --> Exiting: $@"
+    exit 1
+}
