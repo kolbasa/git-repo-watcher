@@ -55,6 +55,8 @@ push_one_file() {
 
 # Will be executed before each test
 setUp() {
+    cd "$script_dir"
+
     [[ -d "$remote_git" ]] && rm -rf "$remote_git"
     [[ -d "$watched_git" ]] && rm -rf "$watched_git"
     [[ -d "$git_that_changes" ]] && rm -rf "$git_that_changes"
