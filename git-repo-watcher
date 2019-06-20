@@ -71,7 +71,7 @@ pull() {
     if [ $exit_code -eq 1 ]; then
         pull_failed "$1" "$2"
     else
-        commit_message=$(git log -1 --pretty=oneline)
+        commit_message=$(git log -1 --pretty=format:"%h%x09%an%x09%ad%x09%s")
         change_pulled "$1" "$2" "$commit_message"
     fi
     print_separator
