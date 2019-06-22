@@ -4,7 +4,7 @@ A simple bash script to watch a git repository and pull upstream changes if avai
 
 ### Usage
 
-This will start a watcher, that looks for changes every 10 seconds:
+To start, only the file path to your git repository is needed. This will start a watcher, that looks for changes every 10 seconds:
 ```bash
 ./git-repo-watcher -d "/path/to/your/repository"
 ```
@@ -14,8 +14,8 @@ The time interval can be changed by passing it to `-i`:
 ./git-repo-watcher -d "/path/to/your/repository" -i 60 #seconds
 ```
 
-You can add your own logic to the file `git-repo-watcher-hooks`.
-For example, you can then start your build process in case of changes:
+You can add your own logic to `git-repo-watcher-hooks`.
+For example, you can start your build process in case of changes:
 
 ```bash
 # $1 - Git repository name
