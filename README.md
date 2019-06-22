@@ -55,8 +55,7 @@ if [[ $? -eq 1 ]]; then
 fi
 
 # Disown process
-git-repo-watcher -d "/path/to/your/repository" > /path/to/logfile.txt &
-
+git-repo-watcher -d "/path/to/your/repository" > "/path/to/your/logfile.txt" &
 ```
 
 ### Notes
