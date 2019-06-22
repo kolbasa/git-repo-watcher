@@ -95,6 +95,10 @@ function await() {
     wait $1
     cleanup $2
     result=$(cat "$stdout")
+
+    if [[ "$verbose" = true ]] ; then
+        echo "$result"
+    fi
 }
 
 function create_new_branch() {
