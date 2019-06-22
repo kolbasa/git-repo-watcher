@@ -2,7 +2,7 @@
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-default_interval_in_seconds=5;
+default_interval_in_seconds=10;
 default_hooks_file="$script_dir""/git-repo-watcher-hooks"
 
 print_usage() {
