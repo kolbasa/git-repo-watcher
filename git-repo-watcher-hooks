@@ -9,7 +9,7 @@ startup() {
 # $1 - Git repository name
 # $2 - Branch name
 no_changes() {
-    : # Do nothing
+    echo "Nothing changed: $@"
 }
 
 # $1 - Git repository name
