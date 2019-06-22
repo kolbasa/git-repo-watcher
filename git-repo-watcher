@@ -95,7 +95,7 @@ hook() {
 
 # Pulls commit from remote git repository
 #
-# $1 - Git Repository name
+# $1 - Git repository name
 # $2 - Branch name
 pull_change() {
     git pull
@@ -109,8 +109,6 @@ pull_change() {
     fi
 }
 
-repo_name=$(basename `$git_repository_dir`)
-
 while [[ true ]]; do
 
     cd "$git_repository_dir"
@@ -123,8 +121,10 @@ while [[ true ]]; do
 
     git fetch
 
+    repo_name=$(basename -s .git `git config --get remote.origin.url`)
+
     previous_branch="$branch"
-    branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p' | sed -e "s/^origin\///")
+    branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
 
     if [[ -z $branch ]]; then
         echo "ERROR: Unable to get branch" >&2
@@ -164,4 +164,5 @@ while [[ true ]]; do
     fi
 
     sleep $interval_in_seconds
+
 done
