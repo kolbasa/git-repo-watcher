@@ -101,10 +101,11 @@ pull_change() {
     git pull
     exit_code=$?
 
+    commit_message=$(git log -1 --pretty=format:"%h | %an | %ad | %s" | sed "s/\"/'/g" | sed "s/\`/'/g")
+
     if [ $exit_code -eq 1 ]; then
         hook "pull_failed" "$1" "$2" "$commit_message"
     else
-        commit_message=$(git log -1 --pretty=format:"%h | %an | %ad | %s")
         hook "change_pulled" "$1" "$2" "$commit_message"
     fi
 }
