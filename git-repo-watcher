@@ -84,12 +84,12 @@ fi
 
 # Executes user hooks
 #
-# $1   - Hook name
-# $2-# - Hook arguments
+# $1    - Hook name
+# $2-$4 - Hook arguments
 hook() {
-    hook_name="$1" && shift
+    hook_name="$1"
     if [[ "$(type -t "$hook_name")" = "function" ]]; then
-        eval "$hook_name '$@'"
+        eval "$hook_name '$2' '$3' '$4'"
     fi
 }
 
