@@ -112,7 +112,9 @@ pull_change() {
 
 while [[ true ]]; do
 
-    cd "$git_repository_dir"
+    if [[ "$(basename $PWD)" != "$git_repository_dir" ]]; then
+	cd "$git_repository_dir"
+    fi
 
     if [[ -f ".git/index.lock" ]]; then
         echo "ERROR: Git repository is locked, waiting to unlock" >&2
