@@ -89,7 +89,7 @@ fi
 hook() {
     hook_name="$1"
     if [[ "$(type -t "$hook_name")" = "function" ]]; then
-        eval "$hook_name '$2' '$3' '$4'"
+        eval "$hook_name '$2' '$3' "'$4'""
     fi
 }
 
