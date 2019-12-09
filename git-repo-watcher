@@ -110,7 +110,7 @@ pull_change() {
     fi
 }
 
-while [[ true ]]; do
+while true; do
 
     cd "$git_repository_dir"
 
