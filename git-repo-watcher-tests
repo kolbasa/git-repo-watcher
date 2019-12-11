@@ -15,10 +15,7 @@ remote_repo_clone="$temp_dir/remote-clone"
 watched_clone="$temp_dir/watched-clone"
 
 # A verbose-flag can be passed ("-v")
-if [[ "$1" == "-v" ]]; then
-    verbose=true
-    shift
-fi
+[[ "$1" == "-v" ]] && verbose=true && shift
 
 # Redirecting output
 if [[ "$verbose" ]]; then
@@ -28,7 +25,6 @@ else
     exec 3>/dev/null
     exec 4>/dev/null
 fi
-
 
 # Create temp directory
 [[ ! -d "$temp_dir" ]] && mkdir "$temp_dir"
@@ -41,7 +37,7 @@ fi
 # Prints a seperator. It helps to make the output more readable.
 printSeparator() {
     local sep="$1"
-    if [[ -z "$sep" ]]; then sep="-"; fi
+    [[ -z "$sep" ]] && sep="-"
 
     # shellcheck disable=SC2034
     for i in {1..75}; do local x=$x"$sep"; done && echo "$x"
@@ -74,16 +70,21 @@ tearDown() {
     return 0
 }
 
+# Commiting and pushing file to remote repository
+#
+# $1 - File name
+# $2 - Commit message
 pushOneFile() {
-    local file=$1
-    if [[ -z $file ]]; then
-        local file='test-file'
-    fi
+    local file="$1"
+    [[ -z "$file" ]] && file='test-file'
+
+    local message="$2"
+    [[ -z "$message" ]] && message="Commit message"
 
     cd "$remote_repo_clone" || exit 1
     touch "$file"
     git add . 1>&3 2>&4
-    git commit -m "Message for File $file" 1>&3 2>&4
+    git commit -m "$message" 1>&3 2>&4
     git push 1>&3 2>&4
 }
 
@@ -102,11 +103,11 @@ startWatcher() {
 
     # A short interval is used to guarantee multiple iterations
     options="$options -i 0.1" # 0.1 seconds
-    eval "$project_dir/$main_script $options" &>$stdout  &
+    eval "$project_dir/$main_script $options" &>$stdout &
     watcher_pid=$!
 }
 
-recordOutput() {
+collectOutput() {
     # We wait one second to collect stdout of multiple
     # iterations of the main watch loop.
     sleep 1
@@ -117,7 +118,7 @@ recordOutput() {
     # Reading the logfile
     result=$(cat "$stdout")
 
-    if [[ "$verbose" ]]; then echo "$result"; fi
+    [[ "$verbose" ]] && echo "$result"
 }
 
 createNewBranch() {
@@ -129,8 +130,8 @@ createNewBranch() {
 # -------------------------------------------------------------------- #
 
 testHelpScreen() {
-    startWatcher " "
-    recordOutput
+    startWatcher " " # start without options
+    collectOutput
 
     assertContains "$result" "SYNOPSIS"
 }
@@ -140,7 +141,7 @@ testHelpScreen() {
 testNewCommitBeforeStart() {
     pushOneFile
     startWatcher
-    recordOutput
+    collectOutput
 
     assertContains "$result" "1 file changed"
     assertContains "$result" "Fast-forward"
@@ -151,7 +152,7 @@ testNewCommitBeforeStart() {
 testNewCommitAfterStart() {
     startWatcher
     pushOneFile
-    recordOutput
+    collectOutput
 
     assertContains "$result" "1 file changed"
     assertContains "$result" "Fast-forward"
@@ -161,7 +162,7 @@ testNewCommitAfterStart() {
 
 testNothingChangedHook() {
     startWatcher
-    recordOutput
+    collectOutput
 
     assertContains "$result" "Nothing changed"
     assertNotContains "$result" "Fast-forward"
@@ -171,7 +172,7 @@ testNothingChangedHook() {
 
 testStartupHook() {
     startWatcher
-    recordOutput
+    collectOutput
 
     assertContains "$result" "Watch started"
 }
@@ -188,7 +189,7 @@ testBranchChangedHook() {
     cd "$watched_clone" || exit 1
     git checkout -t "origin/$branch" 1>&3 2>&4
 
-    recordOutput
+    collectOutput
 
     assertContains "$result" "Branch changed"
     assertContains "$result" "$branch"
@@ -203,7 +204,7 @@ testNoUpstreamHook() {
     cd "$watched_clone" || exit 1
     git checkout -b "new_branch" 1>&3 2>&4
 
-    recordOutput
+    collectOutput
 
     assertContains "$result" "Upstream not set"
 }
@@ -213,7 +214,7 @@ testNoUpstreamHook() {
 testPulledHook() {
     pushOneFile
     startWatcher
-    recordOutput
+    collectOutput
 
     assertContains "$result" "Changes pulled"
 }
@@ -227,12 +228,11 @@ testRelativePath() {
     cd "$temp_dir" || exit 1
     startWatcher "-d $(basename "$watched_clone")"
 
-    recordOutput
+    collectOutput
 
     assertNotContains "$result" "No such file or directory"
     assertContains "$result" "Changes pulled"
 }
-
 
 # -------------------------------------------------------------------- #
 
