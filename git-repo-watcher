@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-default_interval_in_seconds=10;
+default_interval_in_seconds=10
 default_hooks_file="$script_dir""/git-repo-watcher-hooks"
 
 print_usage() {
@@ -17,42 +17,47 @@ print_usage() {
     echo "    -i    Watch interval time in seconds (defaults to 10 seconds)"
     echo "    -h    Custom hooks file"
     echo ""
-    exit 1;
+    exit 1
 }
 
 while getopts ":d:i:h:" options; do
     case "${options}" in
-        d)
-            git_repository_dir=${OPTARG};
-            ;;
-        h)
-            hooks_file=${OPTARG};
-            ;;
-        i)
-            interval_in_seconds=${OPTARG};
-            ;;
-        *)
-            print_usage;
-            ;;
+    d)
+        git_repository_dir=${OPTARG}
+        ;;
+    h)
+        hooks_file=${OPTARG}
+        ;;
+    i)
+        interval_in_seconds=${OPTARG}
+        ;;
+    *)
+        print_usage
+        ;;
     esac
 done
-shift $((OPTIND-1))
+shift $((OPTIND - 1))
 
 # Validating given git directory
 
-if [[ -z "${git_repository_dir}" ]]; then
-    echo -e "\nERROR: Git directory (-d) not given!" >&2;
+if [[ -z "$git_repository_dir" ]]; then
+    echo -e "\nERROR: Git directory (-d) not given!" >&2
     print_usage
 fi
 
-if [[ ! -d "${git_repository_dir}/.git" ]] || [[ ! -r "${git_repository_dir}/.git" ]]; then
+if [[ ! -d "$git_repository_dir/.git" ]] || [[ ! -r "$git_repository_dir/.git" ]]; then
     echo "ERROR: Git directory (-d) not found: '$git_repository_dir/.git'!" >&2
     print_usage
 fi
 
-if [[ ! -w "${git_repository_dir}" ]]; then
+if [[ ! -w "$git_repository_dir" ]]; then
     echo "ERROR: Missing write permissions for the git directory (-d): '$git_repository_dir/.git'!" >&2
     print_usage
+fi
+
+# Convert to absolute file path if necessary
+if [[ "$git_repository_dir" != /* ]]; then
+    git_repository_dir="$PWD/$git_repository_dir"
 fi
 
 # Validating given hook file
@@ -60,6 +65,7 @@ fi
 [[ -z "${hooks_file}" ]] && hooks_file="$default_hooks_file"
 
 if [[ -f "${hooks_file}" ]] && [[ -r "${hooks_file}" ]]; then
+    # shellcheck source=git-repo-watcher-hooks
     source "${hooks_file}"
 else
     echo "ERROR: Hooks (-h) file not found: '$hooks_file'" >&2
@@ -77,7 +83,7 @@ if [[ ! "$interval_in_seconds" =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
     print_usage
 fi
 
-if (( $(echo "$interval_in_seconds < 0.1" | bc -l) )); then
+if (($(echo "$interval_in_seconds < 0.1" | bc -l))); then
     echo "ERROR: Interval (-i) should be greater than '0.1'" >&2
     print_usage
 fi
@@ -88,7 +94,7 @@ fi
 # $2-$4 - Hook arguments
 hook() {
     hook_name="$1"
-    if [[ "$(type -t "$hook_name")" = "function" ]]; then
+    if [[ "$(type -t "$hook_name")" == "function" ]]; then
         eval "$hook_name '$2' '$3' '$4'"
     fi
 }
@@ -112,7 +118,7 @@ pull_change() {
 
 while true; do
 
-    cd "$git_repository_dir"
+    cd "$git_repository_dir" || exit 1
 
     if [[ -f ".git/index.lock" ]]; then
         echo "ERROR: Git repository is locked, waiting to unlock" >&2
@@ -122,7 +128,7 @@ while true; do
 
     git fetch
 
-    repo_name=$(basename -s .git `git config --get remote.origin.url`)
+    repo_name=$(basename -s .git "$(git config --get remote.origin.url)")
 
     previous_branch="$branch"
     branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
@@ -132,11 +138,11 @@ while true; do
         exit 1
     fi
 
-    if [[ ! -z $previous_branch ]] && [[ "$previous_branch" != "$branch" ]]; then
+    if [[ -n $previous_branch ]] && [[ "$previous_branch" != "$branch" ]]; then
         hook "branch_changed" "$repo_name" "$branch" "$previous_branch"
     fi
 
-    upstream="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null)"
+    upstream="$(git rev-parse --abbrev-ref --symbolic-full-name "@{u}" 2>/dev/null)"
 
     # upstream was not configured
     if [[ -z "$upstream" ]]; then
@@ -150,15 +156,15 @@ while true; do
     git_base=$(git merge-base @ "$upstream")
 
     if [[ -z $started ]]; then
-        started=true;
+        started=true
         hook "startup" "$repo_name" "$branch"
     fi
 
-    if [[ "$git_local" = "$git_remote" ]]; then
+    if [[ "$git_local" == "$git_remote" ]]; then
         hook "no_changes" "$repo_name" "$branch"
-    elif [[ "$git_local" = "$git_base" ]]; then
+    elif [[ "$git_local" == "$git_base" ]]; then
         hook "pull_change" "$repo_name" "$branch"
-    elif [[ "$git_remote" = "$git_base" ]]; then
+    elif [[ "$git_remote" == "$git_base" ]]; then
         hook "local_change" "$repo_name" "$branch"
     else
         hook "diverged" "$repo_name" "$branch"
