@@ -258,7 +258,7 @@ testRelativePath() {
 
     # Use a relative path for the git directory
     cd "$temp_dir" || exit 1
-    startWatcher "-d $(basename "$temp_dir/$watched_clone")"
+    startWatcher "-d $watched_clone"
 
     collectOutput
 
