@@ -61,7 +61,6 @@ if [[ "$git_repository_dir" != /* ]]; then
 fi
 
 # Validating given hook file
-
 [[ -z "${hooks_file}" ]] && hooks_file="$default_hooks_file"
 
 if [[ -f "${hooks_file}" ]] && [[ -r "${hooks_file}" ]]; then
@@ -73,7 +72,6 @@ else
 fi
 
 # Validating given interval
-
 if [[ -z "$interval_in_seconds" ]]; then
     interval_in_seconds="$default_interval_in_seconds"
 fi
@@ -94,8 +92,9 @@ fi
 # $2-$4 - Hook arguments
 hook() {
     hook_name="$1"
+    shift
     if [[ "$(type -t "$hook_name")" == "function" ]]; then
-        eval "$hook_name '$2' '$3' '$4'"
+        eval "$hook_name $*"
     fi
 }
 
@@ -107,12 +106,12 @@ pull_change() {
     git pull
     exit_code=$?
 
-    commit_message=$(git log -1 --pretty=format:"%h | %an | %ad | %s" | sed "s/\"/'/g" | sed "s/\`/'/g")
+    commit_message=$(git log -1 --pretty=format:"%h | %an | %ad | %s")
 
     if [ $exit_code -eq 1 ]; then
         hook "pull_failed" "$1" "$2" "$commit_message"
     else
-        hook "change_pulled" "$1" "$2" "$commit_message"
+        hook "change_pulled" "$1" "$2" "${commit_message@Q}"
     fi
 }
 
