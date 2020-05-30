@@ -56,11 +56,11 @@ if [[ $? -eq 1 ]]; then
 fi
 
 # Disown process
-./git-repo-watcher -d "/path/to/your/repository" > "/path/to/your/logfile.txt" &
+./git-repo-watcher -d "/path/to/your/repository" > "/path/to/your/logfile.txt" & disown
 ```
 
 ### Notes
 
 * Make sure your local repository is tracking a remote branch, otherwise the script will fail.
 * The test suite `git-repo-watcher-tests` is using the test framework `shunit2`, it will be downloaded automatically to your `/tmp` folder.
-* Tested on Bash version 4 and 5.
+* Tested with Bash version 3, 4 and 5 on Debian, Ubuntu and MacOS.
