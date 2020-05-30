@@ -39,7 +39,6 @@ done
 shift $((OPTIND - 1))
 
 # Validating given git directory
-
 if [[ -z "$git_repository_dir" ]]; then
     echo -e "\nERROR: Git directory (-d) not given!" >&2
     print_usage
@@ -50,7 +49,7 @@ if [[ ! -d "$git_repository_dir/.git" ]] || [[ ! -r "$git_repository_dir/.git" ]
     print_usage
 fi
 
-if [[ ! -w "$git_repository_dir" ]]; then
+if [[ ! -w "$git_repository_dir/.git" ]]; then
     echo "ERROR: Missing write permissions for the git directory (-d): '$git_repository_dir/.git'!" >&2
     print_usage
 fi
@@ -74,16 +73,6 @@ fi
 # Validating given interval
 if [[ -z "$interval_in_seconds" ]]; then
     interval_in_seconds="$default_interval_in_seconds"
-fi
-
-if [[ ! "$interval_in_seconds" =~ ^[+-]?[0-9]+([.][0-9]+)?$ ]]; then
-    echo "ERROR: Interval (-i) is not a valid number: '$interval_in_seconds'" >&2
-    print_usage
-fi
-
-if (($(echo "$interval_in_seconds < 0.1" | bc -l))); then
-    echo "ERROR: Interval (-i) should be greater than '0.1'" >&2
-    print_usage
 fi
 
 # Executes user hooks
@@ -111,7 +100,7 @@ pull_change() {
     if [ $exit_code -eq 1 ]; then
         hook "pull_failed" "$1" "$2" "$commit_message"
     else
-        hook "change_pulled" "$1" "$2" "${commit_message@Q}"
+        hook "change_pulled" "$1" "$2" "$(printf '%q\n' "$commit_message")"
     fi
 }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-project_dir="$PWD"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 main_script="git-repo-watcher"
 shunit_git="https://github.com/kward/shunit2"
 
@@ -60,7 +60,7 @@ cleanupTempFiles() {
 # Will be executed before each test
 # https://github.com/kward/shunit2#-setupteardown
 setUp() {
-    cd "$project_dir" || exit 1
+    cd "$script_dir" || exit 1
 
     # Create a fresh 'remote' git repository
     git init --bare "$temp_dir/$remote_repo" 1>&3 2>&4
@@ -109,7 +109,7 @@ startWatcher() {
 
     # A short interval is used to guarantee multiple iterations
     options="$options -i 0.1" # 0.1 seconds
-    eval "$project_dir/$main_script $options" &>$stdout &
+    eval "$script_dir/$main_script $options" &>$stdout &
     watcher_pid=$!
 }
 
@@ -123,6 +123,7 @@ collectOutput() {
     sleep "$sleep_time"
 
     # Killing the watcher script
+    disown "$watcher_pid"
     kill "$watcher_pid" 2>/dev/null
 
     # Reading the logfile
@@ -239,16 +240,6 @@ testNoUpstreamHook() {
     collectOutput
 
     assertContains "$result" "Upstream not set"
-}
-
-# -------------------------------------------------------------------- #
-
-testPulledHook() {
-    pushOneFile
-    startWatcher
-    collectOutput
-
-    assertContains "$result" "Changes pulled"
 }
 
 # -------------------------------------------------------------------- #
