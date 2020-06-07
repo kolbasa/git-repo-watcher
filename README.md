@@ -84,25 +84,24 @@ The file structure is also slightly different:
 
 Note: In [Ubuntu 20.04 LTS](https://www.microsoft.com/en-us/p/ubuntu-2004-lts/9n6svws3rx71) there is a [bug](https://github.com/microsoft/WSL/issues/4898) that was introduced by Microsoft.
 The `sleep` command does not work. However, this is used by the git-repo-watcher. A temporary fix for this can be found in the [same thread](https://github.com/microsoft/WSL/issues/4898#issuecomment-638649617).
+
 [Ubuntu 18.04 LTS](https://www.microsoft.com/en-us/p/ubuntu-1804-lts/9n9tngvndl3q) does not have this problem.
-
-
 
 ### Tests
 
-The test suite `git-repo-watcher-tests` is using the test framework `shunit2`, it will be downloaded automatically to your `/tmp` folder.
+The test suite `git-repo-watcher-tests` is using the test framework [shunit2](https://github.com/kward/shunit2), it will be downloaded automatically to your `/tmp` folder.
 The script doesn't need any other dependencies and doesn't need an internet connection. 
 
 The tests create several test Git repositories in the folder: `/tmp/git-repo-watcher`.
 
 A git user should be configured, otherwise the tests will fail.
 Here you can see if this is the case:
-```
+```bash
 git config --list
 ```
 
 Otherwise you can set it as follows:
-```
+```bash
 git config --global user.email "you@example.com"
 git config --global user.name "Your Name"
 ```
