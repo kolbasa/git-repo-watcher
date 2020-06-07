@@ -1,4 +1,4 @@
-# git-repo-watcher
+# Git Repo Watcher
 
 A simple bash script to watch a git repository and pull upstream changes if available.
 
@@ -82,8 +82,10 @@ The file structure is also slightly different:
 
 `C:\YourGitRepository` &#8594; `/mnt/c/YourGitRepository`
 
-Note: In [Ubuntu 20.04 LTS](https://www.microsoft.com/en-us/p/ubuntu-2004-lts/9n6svws3rx71?activetab=pivot:overviewtab) there is a [reported bug](https://github.com/microsoft/WSL/issues/4898) that was introduced by Microsoft.
+Note: In [Ubuntu 20.04 LTS](https://www.microsoft.com/en-us/p/ubuntu-2004-lts/9n6svws3rx71) there is a [bug](https://github.com/microsoft/WSL/issues/4898) that was introduced by Microsoft.
 The `sleep` command does not work. However, this is used by the git-repo-watcher. A temporary fix for this can be found in the [same thread](https://github.com/microsoft/WSL/issues/4898#issuecomment-638649617).
+[Ubuntu 18.04 LTS](https://www.microsoft.com/en-us/p/ubuntu-1804-lts/9n9tngvndl3q) does not have this problem.
+
 
 
 ### Tests
