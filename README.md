@@ -7,13 +7,15 @@ A simple bash script to watch a git repository and pull upstream changes if avai
 * Bash with Version > 3
 * Tested on Ubuntu, Debian, MacOS, [Windows Git Shell](https://git-scm.com/download/win), [Windows Subsystem for Linux (WSL)](https://www.microsoft.com/en-us/p/ubuntu/9nblggh4msv6)
 
-Basically, it will work anywhere you can install bash.
+Basically, it will work anywhere you can install Bash.
 
 If something doesn't work, please [let me know](https://github.com/kolbasa/git-repo-watcher/issues).
 
 ### Usage
 
-To start, only the file path to your git repository is needed. This will start a watcher that looks for changes every 10 seconds:
+You only need the path to your git repository to start.
+
+This will start a watcher that looks for changes every 10 seconds:
 ```bash
 ./git-repo-watcher -d "/path/to/your/repository"
 ```
@@ -27,7 +29,7 @@ Make sure your local repository is tracking a remote branch, otherwise the scrip
 
 ### Customizations
 
-You can add your own logic to the file: `git-repo-watcher-hooks`.
+You can add your own logic to the file: [`git-repo-watcher-hooks`](https://github.com/kolbasa/git-repo-watcher/blob/master/git-repo-watcher-hooks)
 
 For example, you can start your build process in case of changes:
 
@@ -51,8 +53,8 @@ If you have more than one repository you can pass a copy of the `git-repo-watche
 The script works with private repositories.  
 
 First configure a password cache with `git config --global credential.helper "cache --timeout=60"`.  
-Make sure that the `timeout` is greater than the time interval given to the script. Both are given as seconds.  
-At startup, the program will execute `git fetch` and ask for your credentials.
+Make sure the `timeout` is greater than the time interval given to the script. Both are given as seconds.  
+The program will execute `git fetch` and ask for your login data. The script itself **does not** store passwords!
 
 If you want it to run in the background as a daemon process, you have to execute `git fetch` beforehand.
 For example:
@@ -87,20 +89,20 @@ The file structure is also slightly different:
 
 ### Tests
 
-The test suite `git-repo-watcher-tests` is using the test framework [shunit2](https://github.com/kward/shunit2), it will be downloaded automatically to your `/tmp` folder.  
+The test suite [`git-repo-watcher-tests`](https://github.com/kolbasa/git-repo-watcher/blob/master/git-repo-watcher-tests) is using the test framework [shunit2](https://github.com/kward/shunit2), it will be downloaded automatically to your `/tmp` folder.  
 The script has no other dependencies and requires no internet connection.
 
 The tests create several test git repositories in the folder: `/tmp/git-repo-watcher`.
 
 A git user should be configured, otherwise the tests will fail.  
-Here you can see if this is the case:
+With the following line you can check if this is the case:
 ```bash
 git config --list
 ```
 
-Otherwise you can set it as follows:
+You can configure it as follows:
 ```bash
-git config --global user.email "you@example.com"
+git config --global user.email "your@email.com"
 git config --global user.name "Your Name"
 ```
 
