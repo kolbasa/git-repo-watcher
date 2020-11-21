@@ -5,7 +5,7 @@ A simple bash script to watch a git repository and pull upstream changes if avai
 ### Requirements
 
 * Bash with Version > 3
-* Tested on Ubuntu, Debian, MacOS, [Windows Git Shell](https://git-scm.com/download/win), [Windows Subsystem for Linux (WSL)](https://www.microsoft.com/en-us/p/ubuntu-2004-lts/9n6svws3rx71)
+* Tested on Ubuntu, Debian, MacOS, [Windows Git Shell](https://git-scm.com/download/win), [Windows Subsystem for Linux (WSL)](https://www.microsoft.com/en-us/p/ubuntu/9nblggh4msv6)
 
 Basically, it will work anywhere you can install bash.
 If something doesn't work, please let me know.
@@ -69,7 +69,7 @@ fi
 ./git-repo-watcher -d "/path/to/your/repository" > "/path/to/your/logfile.txt" & disown
 ```
 
-### Using on Windows 10
+### Windows 10
 
 The easiest way is to install [Git Shell](https://git-scm.com/download/win), which also comes with bash. 
 The only thing you have to consider are the file separators.
@@ -77,15 +77,10 @@ The Unix format should be used here:
 
 `C:\YourGitRepository` &#8594; `/C/YourGitRepository`
 
-It is a little more difficult with [WSL](https://www.microsoft.com/en-us/p/ubuntu-2004-lts/9n6svws3rx71). This must first be installed and configured via the Windows Store.
+It is a little more difficult with [WSL](https://www.microsoft.com/en-us/p/ubuntu/9nblggh4msv6). This must first be installed and configured via the Windows Store.
 The file structure is also slightly different:
 
 `C:\YourGitRepository` &#8594; `/mnt/c/YourGitRepository`
-
-Note: In [Ubuntu 20.04 LTS](https://www.microsoft.com/en-us/p/ubuntu-2004-lts/9n6svws3rx71) there is a [bug](https://github.com/microsoft/WSL/issues/4898) that was introduced by Microsoft.
-The `sleep` command does not work. However, this is used by the git-repo-watcher. A temporary fix for this can be found in the [same thread](https://github.com/microsoft/WSL/issues/4898#issuecomment-638649617).
-
-[Ubuntu 18.04 LTS](https://www.microsoft.com/en-us/p/ubuntu-1804-lts/9n9tngvndl3q) does not have this problem.
 
 ### Tests
 
