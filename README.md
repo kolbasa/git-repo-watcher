@@ -57,7 +57,8 @@ Make sure the `timeout` is greater than the time interval given to the script. B
 The program will execute `git fetch` and ask for your login data. The script itself **does not** store passwords!
 
 If you want it to run in the background as a daemon process, you have to execute `git fetch` beforehand.
-For example:
+
+Example code:
 
 ```bash
 cd "/path/to/your/repository"
@@ -71,7 +72,7 @@ if [[ $? -eq 1 ]]; then
 fi
 
 # Disown process
-./git-repo-watcher -d "/path/to/your/repository" > "/path/to/your/logfile.txt" & disown
+./git-repo-watcher -d "/path/to/your/repository" > "/path/to/your/logfile.log" & disown
 ```
 
 ### Windows 10
