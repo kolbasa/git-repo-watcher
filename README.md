@@ -13,19 +13,24 @@ If something doesn't work, please [let me know](https://github.com/kolbasa/git-r
 
 ### Usage
 
-You only need the path to your git repository to start.
+You only need the path to your git repository to start.  
+Make sure your local repository is tracking a remote branch, otherwise the script will fail.
 
 This will start a watcher that looks for changes every 10 seconds:
 ```bash
 ./git-repo-watcher -d "/path/to/your/repository"
 ```
 
-The time interval can be changed by passing it to `-i`:
+The time interval can be changed by passing it to `-i` (seconds):
 ```bash
-./git-repo-watcher -d "/path/to/your/repository" -i 60 #seconds
+./git-repo-watcher -d "/path/to/your/repository" -i 60
 ```
 
-Make sure your local repository is tracking a remote branch, otherwise the script will fail.
+You can also turn off the watcher by passing `-o`.  
+This will execute the script only once.
+```bash
+./git-repo-watcher -d "/path/to/your/repository" -o
+```
 
 ### Customizations
 
